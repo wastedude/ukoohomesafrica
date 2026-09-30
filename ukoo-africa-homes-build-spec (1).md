@@ -8,7 +8,7 @@
 **Client:** Ukoo Africa Homes Ltd  
 **Domain:** `ukooafricahomes.co.ke`  
 **Current site:** WordPress + Elementor + WooCommerce (being replaced entirely)  
-**Hosting target:** Firebase Hosting (static export)  
+**Hosting target:** Vercel  
 **CMS:** Sanity.io (no-code admin for client)  
 **Purpose:** Real estate lead generation — affordable homes and land for sale across Kenya (Juja, Thika, Ngoingwa, Thika Superhighway corridor)  
 **Primary audience:** Kenyan home buyers and land investors, majority on mobile, majority on relatively slow mobile data  
@@ -30,8 +30,8 @@
 | Images | **Next.js `<Image>`** | WebP, lazy loading, blur placeholder |
 | Icons | **Lucide React** | Consistent, lightweight |
 | Fonts | **Next.js font optimisation** | Self-hosted via `next/font/google` — no external font requests |
-| Deployment | **Firebase Hosting** | `next export` static output |
-| DNS | **HostPinnacle Kenya** | A records pointed to Firebase |
+| Deployment | **Vercel** | Standard Next.js production deployment |
+| DNS | **HostPinnacle Kenya** | Custom domain on Vercel |
 | Analytics | **Google Analytics 4** | Via `@next/third-parties/google` |
 | SEO | **next-seo + JSON-LD** | Per-page metadata + RealEstateListing schema |
 | Version Control | **Git + GitHub** | Main branch protected; deploy on push to `main` |
@@ -199,9 +199,7 @@ ukoo-africa-homes/
 │   └── index.ts                  # TypeScript types for all Sanity documents
 │
 ├── .env.local                    # Sanity project ID, dataset, tokens
-├── firebase.json                 # Firebase hosting config
-├── .firebaserc                   # Firebase project alias
-├── next.config.ts                # output: 'export', images config
+├── next.config.ts                # Next.js runtime config for Vercel
 ├── tailwind.config.ts
 ├── sanity.config.ts              # Sanity Studio config
 └── tsconfig.json
@@ -558,49 +556,20 @@ export const SITE_SETTINGS_QUERY = groq`
 
 ---
 
-## 8. Firebase & Next.js Config
+## 8. Vercel & Next.js Config
 
 ### `next.config.ts`
 ```ts
 const nextConfig = {
-  output: 'export',           // Static export for Firebase Hosting
-  trailingSlash: true,        // Required for Firebase static hosting
   images: {
-    unoptimized: true,        // Required for static export — use Sanity's image CDN instead
     remotePatterns: [
-      { hostname: 'cdn.sanity.io' }
+      { protocol: 'https', hostname: 'cdn.sanity.io' }
     ]
   }
 }
 ```
 
-### `firebase.json`
-```json
-{
-  "hosting": {
-    "public": "out",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [],
-    "redirects": [
-      { "source": "/product/**", "destination": "/projects", "type": 301 },
-      { "source": "/my-blog-page", "destination": "/blog", "type": 301 },
-      { "source": "/my-account/**", "destination": "/", "type": 301 }
-    ],
-    "headers": [
-      {
-        "source": "**/*.@(jpg|jpeg|gif|png|svg|webp)",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-      },
-      {
-        "source": "**/*.@(js|css)",
-        "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
-      }
-    ]
-  }
-}
-```
-
-> **Note on Sanity Studio:** The `/studio` route requires server-side rendering. Host Sanity Studio separately at `studio.ukooafricahomes.co.ke` (Sanity manages this for free via `sanity deploy`) — do not bundle it in the static Next.js export.
+> **Note on Sanity Studio:** The Studio route works in the standard Vercel deployment and should remain in the same app. The app does not need a static export.
 
 ---
 
@@ -681,7 +650,7 @@ The following content exists on the current WordPress site and must be carried o
 ### Pages to recreate:
 - About, Blog, FAQs, Privacy Policy, Terms
 
-### URLs to redirect (301) on Firebase:
+### URLs to redirect (301) on the live site:
 ```
 /product/investment-packages-for-diaspora-groups/ → /projects/investment-packages-diaspora-groups
 /product/house-construction-packages/              → /projects/house-construction-packages
@@ -708,8 +677,8 @@ Build in this order to unblock progress at each stage:
 7. **Site Visit form page**
 8. **About, Blog, FAQs pages**
 9. **SEO** — metadata, sitemap, robots.txt, JSON-LD
-10. **Firebase config** — `firebase.json`, redirects, cache headers
-11. **DNS** — update HostPinnacle A records to Firebase IPs
+10. **Vercel project config** — environment variables, custom domain, production deploy
+11. **DNS** — configure HostPinnacle custom domain routing and SSL
 12. **QA** — Lighthouse audit, mobile test, form submission test, all redirects verified
 
 ---
@@ -723,7 +692,7 @@ Before handing to client:
 - [ ] CMS walkthrough video recorded (add/edit/remove property, mark as sold)
 - [ ] All 5 original properties migrated into Sanity with photos
 - [ ] All 3 testimonials in Sanity
-- [ ] Firebase Hosting live with custom domain and SSL ✅
+- [ ] Vercel production deployment live with custom domain and SSL ✅
 - [ ] All old WordPress URLs redirect correctly (test each one)
 - [ ] Google Analytics 4 property connected
 - [ ] Google Search Console domain verified, sitemap submitted

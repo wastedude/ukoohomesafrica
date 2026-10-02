@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, Inter } from "next/font/google";
 import "./globals.css";
+import { client } from "@/sanity/lib/client";
+import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 
 const display = DM_Serif_Display({
   variable: "--font-display",
@@ -28,7 +30,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const settings = await client.fetch(SITE_SETTINGS_QUERY);
+
   return (
     <html lang="en" className={`${display.variable} ${inter.variable}`}>
       <body>
@@ -42,8 +46,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
               name: "Ukoo Africa Homes Ltd",
               url: "https://www.ukooafricahomes.co.ke",
               areaServed: "Kenya",
-              telephone: "+254700000000",
-              email: "hello@ukooafricahomes.co.ke",
+              telephone: settings?.phoneNumber || undefined,
+              email: settings?.email || undefined,
             }),
           }}
         />

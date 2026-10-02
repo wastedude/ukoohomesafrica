@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -15,18 +15,78 @@ import {
   X,
 } from "lucide-react";
 
-const properties = [
-  { title: "Investment Packages for Diaspora & Groups", type: "Investment Package", location: "Kenya", size: "Flexible package", price: "KSh 6.5M", status: "For Sale", image: "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=85" },
-  { title: "House Construction Packages", type: "Residential Home", location: "Kenya", size: "Modern home package", price: "KSh 35,000", status: "New", image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=85" },
-  { title: "Commercial Plots", type: "Commercial Plot", location: "Thika Superhighway", size: "Serviced plots", price: "KSh 10M", status: "For Sale", image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=85" },
-  { title: "Residential Plots in Controlled Developments", type: "Residential Plot", location: "Juja", size: "50 x 100 ft", price: "KSh 3M", status: "For Sale", image: "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85" },
-];
+import { client } from "@/sanity/lib/client";
+import { urlFor } from "@/sanity/lib/image";
+import { ALL_PROPERTIES_QUERY, SITE_SETTINGS_QUERY, TESTIMONIALS_QUERY } from "@/sanity/lib/queries";
+
+type CmsProperty = {
+  _id: string;
+  title: string;
+  status?: string;
+  type?: string;
+  location?: string;
+  size?: string;
+  priceLabel?: string;
+  slug?: { current: string };
+  mainImage?: { _type: string; asset?: { _ref?: string } };
+};
+
+type CmsTestimonial = {
+  _id: string;
+  name: string;
+  role?: string;
+  quote: string;
+};
+
+type SiteSettings = {
+  whatsappNumber?: string;
+  phoneNumber?: string;
+  email?: string;
+  officeAddress?: string;
+};
 
 const navItems = [["Projects", "/projects"], ["Site Visit", "/site-visit"], ["About", "/about"], ["Blog", "/blog"], ["FAQs", "/faqs"]];
+
+const fallbackSettings: SiteSettings = {
+  whatsappNumber: "254700000000",
+  phoneNumber: "+254 700 000 000",
+  email: "hello@ukooafricahomes.co.ke",
+  officeAddress: "Juja, Kiambu County\nKenya",
+};
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [location, setLocation] = useState("All locations");
+  const [properties, setProperties] = useState<CmsProperty[]>([]);
+  const [testimonials, setTestimonials] = useState<CmsTestimonial[]>([]);
+  const [settings, setSettings] = useState<SiteSettings | null>(null);
+
+  useEffect(() => {
+    Promise.all([
+      client.fetch(ALL_PROPERTIES_QUERY),
+      client.fetch(TESTIMONIALS_QUERY),
+      client.fetch(SITE_SETTINGS_QUERY),
+    ])
+      .then(([propertiesResult, testimonialsResult, settingsResult]) => {
+        setProperties(Array.isArray(propertiesResult) ? propertiesResult : []);
+        setTestimonials(Array.isArray(testimonialsResult) ? testimonialsResult : []);
+        setSettings(settingsResult ?? null);
+      })
+      .catch(() => {
+        setProperties([]);
+        setTestimonials([]);
+        setSettings(null);
+      });
+  }, []);
+
+  const locationOptions = useMemo(
+    () => ["All locations", ...new Set(properties.map((property) => property.location).filter(Boolean) as string[])],
+    [properties],
+  );
+
+  const currentSettings = settings ?? fallbackSettings;
+  const officeLines = (currentSettings.officeAddress || fallbackSettings.officeAddress || "").split("\n").filter(Boolean);
+  const whatsappHref = `https://wa.me/${(currentSettings.whatsappNumber || fallbackSettings.whatsappNumber || "254700000000").replace(/\s+/g, "")}?text=${encodeURIComponent("Hi, I'm interested in your properties")}`;
 
   return (
     <div className="min-h-screen overflow-hidden bg-stone">
@@ -40,7 +100,7 @@ export default function Home() {
             {navItems.map(([label, href]) => <a key={label} href={href} className="hover:text-earth">{label}</a>)}
           </nav>
           <div className="hidden items-center gap-5 lg:flex">
-            <a href="tel:+254700000000" className="text-sm text-white/80 hover:text-white">+254 700 000 000</a>
+            <a href={`tel:${(currentSettings.phoneNumber || "+254700000000").replace(/\s+/g, "")}`} className="text-sm text-white/80 hover:text-white">{currentSettings.phoneNumber || "+254 700 000 000"}</a>
             <a href="#visit" className="flex items-center gap-2 rounded-lg bg-earth px-4 py-3 text-sm font-semibold text-ink hover:bg-earth-light">Book a visit <ArrowUpRight size={16} /></a>
           </div>
           <button className="rounded-lg border border-white/30 p-2 text-white lg:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">{menuOpen ? <X /> : <Menu />}</button>
@@ -65,18 +125,56 @@ export default function Home() {
 
         <section className="bg-forest text-white"><div className="mx-auto grid max-w-[1200px] grid-cols-2 divide-x divide-white/15 md:grid-cols-4 md:px-10"><div className="px-5 py-7 md:px-6"><p className="font-display text-3xl text-earth">300+</p><p className="mt-1 text-xs text-white/65">families housed</p></div><div className="px-5 py-7 md:px-6"><p className="font-display text-3xl text-earth">5</p><p className="mt-1 text-xs text-white/65">active developments</p></div><div className="border-t border-white/15 px-5 py-7 md:border-t-0 md:px-6"><p className="font-display text-3xl text-earth">100%</p><p className="mt-1 text-xs text-white/65">genuine title deeds</p></div><div className="border-t border-white/15 px-5 py-7 md:border-t-0 md:px-6"><p className="font-display text-3xl text-earth">Easy</p><p className="mt-1 text-xs text-white/65">flexible payment plans</p></div></div></section>
 
-        <section id="projects" className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-28"><div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">Find your foundation</p><h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">A place to call<br /><em className="text-earth">your own.</em></h2></div><div className="flex items-center gap-3"><label htmlFor="location" className="sr-only">Filter by location</label><select id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="rounded-lg border border-mist bg-chalk px-4 py-3 text-sm text-slate outline-none focus:border-canopy"><option>All locations</option><option>Juja</option><option>Thika</option><option>Thika Superhighway</option></select><a href="#all-projects" className="hidden items-center gap-2 text-sm font-semibold text-forest hover:text-canopy sm:flex">View all <ArrowRight size={16} /></a></div></div><div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">{properties.filter((property) => location === "All locations" || property.location === location).map((property) => <article key={property.title} className="group overflow-hidden rounded-lg bg-chalk"><div className="relative aspect-[1.08] overflow-hidden bg-earth-light"><div className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url(${property.image})` }} /><span className="absolute left-4 top-4 rounded bg-forest px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white">{property.status}</span></div><div className="p-5"><p className="text-xs font-semibold uppercase tracking-wider text-canopy">{property.type}</p><h3 className="mt-2 font-display text-2xl text-forest">{property.title}</h3><p className="mt-2 flex items-center gap-1 text-sm text-slate"><MapPin size={14} className="text-earth" /> {property.location} <span className="mx-1 text-mist">|</span> {property.size}</p><div className="mt-5 flex items-end justify-between border-t border-mist pt-4"><p className="font-semibold text-ink">{property.price}</p><a href="#enquire" className="flex h-8 w-8 items-center justify-center rounded-full border border-mist text-forest hover:border-earth hover:bg-earth"><ArrowUpRight size={15} /></a></div></div></article>)}</div>{location !== "All locations" && properties.filter((property) => property.location === location).length === 0 && <p className="mt-8 text-slate">No properties match this location yet. <a href="https://wa.me/254700000000" className="font-semibold text-forest underline">Talk to our team.</a></p>}</section>
+        <section id="projects" className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-28">
+          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-end">
+            <div>
+              <p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">Find your foundation</p>
+              <h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">A place to call<br /><em className="text-earth">your own.</em></h2>
+            </div>
+            <div className="flex items-center gap-3">
+              <label htmlFor="location" className="sr-only">Filter by location</label>
+              <select id="location" value={location} onChange={(e) => setLocation(e.target.value)} className="rounded-lg border border-mist bg-chalk px-4 py-3 text-sm text-slate outline-none focus:border-canopy">
+                {locationOptions.map((option) => <option key={option}>{option}</option>)}
+              </select>
+              <a href="#all-projects" className="hidden items-center gap-2 text-sm font-semibold text-forest hover:text-canopy sm:flex">View all <ArrowRight size={16} /></a>
+            </div>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {properties.filter((property) => location === "All locations" || property.location === location).map((property) => {
+              const imageUrl = property.mainImage ? urlFor(property.mainImage).width(900).url() : "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=85";
 
-        <section className="bg-earth-light"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-20 md:grid-cols-[0.9fr_1.1fr] md:items-center md:px-10 md:py-28"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">More than a transaction</p><h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">A clearer path to<br /><em className="text-earth">home.</em></h2><p className="mt-6 max-w-[470px] leading-7 text-slate">Whether you are buying your first plot, planning a family home, or investing from abroad, our team makes the next step feel simple.</p><a href="#about" className="mt-8 inline-flex items-center gap-2 font-semibold text-forest hover:text-canopy">Why Ukoo <ArrowRight size={17} /></a></div><div className="grid gap-0 sm:grid-cols-2"><div className="border-b border-earth/40 py-7 sm:border-r sm:pr-7"><ShieldCheck className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">Genuine title deeds</h3><p className="mt-2 text-sm leading-6 text-slate">Clear documentation and guidance at every stage of your purchase.</p></div><div className="border-b border-earth/40 py-7 sm:pl-7"><HeartHandshake className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">Plans that work</h3><p className="mt-2 text-sm leading-6 text-slate">Flexible payment options built around real life and real goals.</p></div><div className="py-7 sm:border-r sm:pr-7"><MapPin className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">Prime locations</h3><p className="mt-2 text-sm leading-6 text-slate">Well-connected developments within reach of Nairobi and opportunity.</p></div><div className="py-7 sm:pl-7"><Sparkles className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">People first</h3><p className="mt-2 text-sm leading-6 text-slate">A trusted team that stays with you beyond the paperwork.</p></div></div></div></section>
+              return (
+                <article key={property._id} className="group overflow-hidden rounded-lg bg-chalk">
+                  <div className="relative aspect-[1.08] overflow-hidden bg-earth-light">
+                    <div className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url(${imageUrl})` }} />
+                    <span className="absolute left-4 top-4 rounded bg-forest px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white">{property.status || "For Sale"}</span>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-canopy">{property.type || "Property"}</p>
+                    <h3 className="mt-2 font-display text-2xl text-forest">{property.title}</h3>
+                    <p className="mt-2 flex items-center gap-1 text-sm text-slate"><MapPin size={14} className="text-earth" /> {property.location}</p>
+                    <p className="mt-5 border-t border-mist pt-4 text-xl font-semibold text-forest">{property.priceLabel || "Contact us"}</p>
+                    <div className="mt-6 flex items-center justify-between gap-3">
+                      <span className="text-xs uppercase tracking-[0.16em] text-slate">{property.size || "Flexible package"}</span>
+                      <a href={`/projects/${property.slug?.current ?? property._id}`} className="inline-flex items-center gap-2 text-sm font-semibold text-forest hover:text-canopy">View details <ArrowRight size={14} /></a>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </section>
 
-        <section id="about" className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-28"><div className="grid gap-12 md:grid-cols-[1fr_1.15fr] md:items-center"><div className="relative aspect-[0.9] overflow-hidden rounded-lg bg-forest"><div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url(https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1200&q=85)" }} /><div className="absolute bottom-5 left-5 max-w-[200px] rounded-lg bg-forest p-5 text-white"><p className="font-display text-3xl text-earth">14 yrs</p><p className="mt-1 text-xs leading-5 text-white/70">of helping Kenyans put down roots</p></div></div><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">The Ukoo difference</p><h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">Home is more than<br /><em className="text-earth">four walls.</em></h2><p className="mt-6 max-w-[520px] leading-7 text-slate">It is the morning light, the neighbour who becomes family, the confidence that what you are building will last. Ukoo Africa Homes brings that feeling within reach through carefully selected land and homes across Kenya.</p><ul className="mt-8 grid gap-4 text-sm text-ink sm:grid-cols-2"><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Honest advice, always</li><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Sites you can visit</li><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Verified documentation</li><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Support after sale</li></ul><a href="#visit" className="mt-9 inline-flex items-center gap-2 rounded-lg bg-forest px-5 py-3.5 text-sm font-semibold text-white hover:bg-canopy">Meet your new beginning <ArrowRight size={16} /></a></div></div></section>
+        <section className="bg-earth-light"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-20 md:grid-cols-[0.9fr_1.1fr] md:items-center md:px-10 md:py-28"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">More than a transaction</p><h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">A clearer path to<br /><em className="text-earth">home.</em></h2><p className="mt-6 max-w-[470px] leading-7 text-slate">Whether you are buying your first plot, planning a family home, or investing from abroad, our team makes the next step feel simple.</p><a href="#about" className="mt-8 inline-flex items-center gap-2 font-semibold text-forest hover:text-canopy">Why Ukoo <ArrowRight size={17} /></a></div><div className="grid gap-0 sm:grid-cols-2"><div className="border-b border-earth/40 py-7 sm:border-r sm:pr-7"><ShieldCheck className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">Genuine title deeds</h3><p className="mt-2 text-sm leading-6 text-slate">Clear documentation and guidance at every stage of your purchase.</p></div><div className="border-b border-earth/40 py-7 sm:pl-7"><HeartHandshake className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">Plans that work</h3><p className="mt-2 text-sm leading-6 text-slate">Flexible payment options built around real life and real goals.</p></div><div className="py-7 sm:border-r sm:pr-7"><MapPin className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">Prime locations</h3><p className="mt-2 text-sm leading-6 text-slate">Well-connected developments within reach of Nairobi and opportunity.</p></div><div className="py-7 sm:pl-7"><Sparkles className="text-canopy" size={28} strokeWidth={1.5} /><h3 className="mt-5 font-display text-2xl text-forest">People first</h3><p className="mt-2 text-sm leading-6 text-slate">A trusted team that listens, plans and stands beside you.</p></div></div></div></section>
 
-        <section className="border-y border-mist bg-chalk"><div className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-24"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">Stories from home</p><h2 className="font-display text-4xl text-forest md:text-5xl">Good decisions feel<br /><em className="text-earth">even better.</em></h2></div><div className="flex gap-1 text-earth"><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /></div></div><div className="mt-12 grid gap-6 md:grid-cols-3"><figure className="border-t-2 border-earth pt-6"><blockquote className="font-display text-2xl leading-snug text-forest">&ldquo;They made the process feel clear, honest and possible.&rdquo;</blockquote><figcaption className="mt-6 text-sm text-slate"><strong className="text-ink">Nyambura Kibugu</strong><br />Quantity Surveyor</figcaption></figure><figure className="border-t-2 border-mist pt-6"><blockquote className="font-display text-2xl leading-snug text-forest">&ldquo;I knew I was making the right investment from the first visit.&rdquo;</blockquote><figcaption className="mt-6 text-sm text-slate"><strong className="text-ink">Stephen Kagai</strong><br />Banker, Credit Section</figcaption></figure><figure className="border-t-2 border-mist pt-6"><blockquote className="font-display text-2xl leading-snug text-forest">&ldquo;Now my children have a place that is truly ours.&rdquo;</blockquote><figcaption className="mt-6 text-sm text-slate"><strong className="text-ink">Sieva Owendi</strong><br />Home Owner</figcaption></figure></div></div></section>
+        <section id="about" className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-28"><div className="grid gap-12 md:grid-cols-[1fr_1.15fr] md:items-center"><div className="relative aspect-[0.9] overflow-hidden rounded-lg bg-forest"><div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url(https://images.unsplash.com/photo-1600607688969-a5bfcd646154?auto=format&fit=crop&w=1200&q=85)" }} /><div className="absolute bottom-5 left-5 max-w-[200px] rounded-lg bg-forest p-5 text-white"><p className="font-display text-3xl text-earth">14 yrs</p><p className="mt-1 text-xs leading-5 text-white/70">of helping Kenyans put down roots</p></div></div><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">The Ukoo difference</p><h2 className="font-display text-4xl leading-tight text-forest md:text-5xl">Home is more than<br /><em className="text-earth">four walls.</em></h2><p className="mt-6 max-w-[520px] leading-7 text-slate">It is the morning light, the neighbour who becomes family, the confidence that what you are building will last. Ukoo Africa Homes brings that feeling within reach through carefully selected land and homes across Kenya.</p><ul className="mt-8 grid gap-4 text-sm text-ink sm:grid-cols-2"><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Honest advice, always</li><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Sites you can visit</li><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Verified documentation</li><li className="flex items-center gap-3"><span className="flex h-6 w-6 items-center justify-center rounded-full bg-earth-light text-canopy"><Check size={14} /></span> Clear next steps</li></ul></div></div></section>
 
-        <section id="visit" className="relative overflow-hidden bg-canopy"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border border-white/10" /><div className="absolute -right-5 -top-5 h-44 w-44 rounded-full border border-white/10" /><div className="relative mx-auto flex max-w-[1200px] flex-col justify-between gap-10 px-5 py-20 md:flex-row md:items-center md:px-10 md:py-24"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-earth-light">Your next chapter starts here</p><h2 className="max-w-[600px] font-display text-4xl leading-tight text-white md:text-6xl">Ready to stop<br /><em className="text-earth-light">renting?</em></h2><p className="mt-5 max-w-[470px] leading-7 text-white/75">Come see the possibilities for yourself. No pressure, just honest answers and a team that listens.</p></div><a href="https://wa.me/254700000000?text=Hi%2C%20I%27m%20interested%20in%20your%20properties" className="flex w-fit items-center gap-3 rounded-lg bg-earth px-6 py-4 text-sm font-semibold text-ink hover:bg-earth-light">Chat on WhatsApp <ArrowUpRight size={17} /></a></div></section>
+        <section className="border-y border-mist bg-chalk"><div className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-24"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">Stories from home</p><h2 className="font-display text-4xl text-forest md:text-5xl">Good decisions feel<br /><em className="text-earth">even better.</em></h2></div><div className="flex gap-1 text-earth"><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /></div></div><div className="mt-12 grid gap-6 md:grid-cols-3">{testimonials.map((testimonial) => <figure key={testimonial._id} className="border-t-2 border-earth pt-6"><blockquote className="font-display text-2xl leading-snug text-forest">&ldquo;{testimonial.quote}&rdquo;</blockquote><figcaption className="mt-6 text-sm text-slate"><strong className="text-ink">{testimonial.name}</strong><br />{testimonial.role || "Home Owner"}</figcaption></figure>)}</div></div></section>
+
+        <section id="visit" className="relative overflow-hidden bg-canopy"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border border-white/10" /><div className="absolute -right-5 -top-5 h-44 w-44 rounded-full border border-white/10" /><div className="relative mx-auto flex max-w-[1200px] flex-col justify-between gap-10 px-5 py-20 md:flex-row md:items-center md:px-10 md:py-24"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-earth-light">Your next chapter starts here</p><h2 className="max-w-[600px] font-display text-4xl leading-tight text-white md:text-6xl">Ready to stop<br /><em className="text-earth-light">renting?</em></h2><p className="mt-5 max-w-[470px] leading-7 text-white/75">Come see the possibilities for yourself. No pressure, just honest answers and a team that listens.</p></div><a href={whatsappHref} className="flex w-fit items-center gap-3 rounded-lg bg-earth px-6 py-4 text-sm font-semibold text-ink hover:bg-earth-light">Chat on WhatsApp <ArrowUpRight size={17} /></a></div></section>
       </main>
 
-      <footer className="bg-forest text-white"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-10"><div><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg border border-earth/70 text-earth"><House size={21} strokeWidth={1.8} /></span><span className="font-display text-xl">ukoo<span className="text-earth">.</span></span></div><p className="mt-5 max-w-[280px] text-sm leading-6 text-white/60">Building more than homes. Creating places to belong, grow and live free.</p></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Explore</p><div className="grid gap-3 text-sm text-white/70"><a href="#projects" className="hover:text-white">Projects</a><a href="#visit" className="hover:text-white">Book a site visit</a><a href="#about" className="hover:text-white">About Ukoo</a><a href="#faqs" className="hover:text-white">FAQs</a></div></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Contact</p><div className="grid gap-3 text-sm text-white/70"><a href="tel:+254700000000" className="hover:text-white">+254 700 000 000</a><a href="mailto:hello@ukooafricahomes.co.ke" className="hover:text-white">hello@ukooafricahomes.co.ke</a><p>Juja, Kiambu County<br />Kenya</p></div></div></div><div className="border-t border-white/10"><div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-3 px-5 py-5 text-xs text-white/45 md:flex-row md:px-10"><p>© 2026 Ukoo Africa Homes Ltd. All rights reserved.</p><p>Integrity. Affordability. Quality.</p></div></div></footer>
+      <footer className="bg-forest text-white"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-10"><div><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg border border-earth/70 text-earth"><House size={21} strokeWidth={1.8} /></span><span className="font-display text-xl">ukoo<span className="text-earth">.</span></span></div><p className="mt-5 max-w-[280px] text-sm leading-6 text-white/60">Building more than homes. Creating places to belong, grow and live free.</p></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Explore</p><div className="grid gap-3 text-sm text-white/70"><a href="#projects" className="hover:text-white">Projects</a><a href="#visit" className="hover:text-white">Book a site visit</a><a href="#about" className="hover:text-white">About Ukoo</a><a href="#faqs" className="hover:text-white">FAQs</a></div></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Contact</p><div className="grid gap-3 text-sm text-white/70"><a href={`tel:${(currentSettings.phoneNumber || "+254700000000").replace(/\s+/g, "")}`} className="hover:text-white">{currentSettings.phoneNumber || "+254 700 000 000"}</a><a href={`mailto:${currentSettings.email || "hello@ukooafricahomes.co.ke"}`} className="hover:text-white">{currentSettings.email || "hello@ukooafricahomes.co.ke"}</a><div className="text-white/70">{officeLines.map((line) => <div key={line}>{line}</div>)}</div></div></div></div><div className="border-t border-white/10"><div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-3 px-5 py-5 text-xs text-white/45 md:flex-row md:px-10"><p>© 2026 Ukoo Africa Homes Ltd. All rights reserved.</p><p>Integrity. Affordability. Quality.</p></div></div></footer>
     </div>
   );
 }

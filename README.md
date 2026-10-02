@@ -21,6 +21,31 @@ npm run dev
 
 Then open http://localhost:3000.
 
+## Access the CMS
+
+Start the app locally with `npm run dev`, then open the Sanity Studio in your browser:
+
+```text
+http://localhost:3000/studio-ukoo-africa-homes
+```
+
+Sign in with the Sanity account that has access to project `2551vm5m`. From the Studio sidebar you can manage:
+
+- **Properties**: listings, prices, locations, descriptions, features, and images
+- **Testimonials**: customer quotes, roles, ratings, and display order
+- **Blog posts**: articles, excerpts, categories, dates, images, and body content
+- **Site settings**: WhatsApp number, phone, email, office address, social links, and form settings
+
+After publishing a change, refresh the website to see the updated CMS content. The frontend reads properties, testimonials, blog posts, and site settings from Sanity rather than from local content arrays.
+
+When the app is deployed to Vercel, use the same path on the production domain:
+
+```text
+https://your-domain.com/studio-ukoo-africa-homes
+```
+
+Replace `your-domain.com` with the Vercel or custom domain assigned to the project.
+
 ## Required environment variables
 
 Create a local `.env.local` file with values similar to:
@@ -38,13 +63,13 @@ NEXT_PUBLIC_SITE_URL=https://www.ukooafricahomes.co.ke
 
 ## Sanity Studio
 
-The Studio is available at:
+The Studio route is available in the browser at:
 
-```bash
-/app/studio-ukoo-africa-homes/[[...tool]]/page.tsx
+```text
+http://localhost:3000/studio-ukoo-africa-homes
 ```
 
-This can be deployed as part of the Vercel app or exposed under a studio subdomain if needed.
+The route implementation is located at `app/studio-ukoo-africa-homes/[[...tool]]/page.tsx`. It is deployed as part of the Next.js app and uses the Sanity project and dataset configured in `.env.local`.
 
 ## Deployment to Vercel
 

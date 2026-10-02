@@ -1,10 +1,13 @@
 import type { MetadataRoute } from "next";
-import { properties } from "@/lib/properties";
+
+import { client } from "@/sanity/lib/client";
+import { ALL_PROPERTIES_QUERY } from "@/sanity/lib/queries";
 
 export const dynamic = "force-static";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const properties = await client.fetch(ALL_PROPERTIES_QUERY);
   const baseUrl = "https://www.ukooafricahomes.co.ke";
   const routes = ["", "/projects", "/site-visit", "/about", "/blog", "/faqs"];
-  return [...routes.map((route) => ({ url: `${baseUrl}${route}`, lastModified: new Date() })), ...properties.map((property) => ({ url: `${baseUrl}/projects/${property.slug}`, lastModified: new Date() }))];
+  return [...routes.map((route) => ({ url: `${baseUrl}${route}`, lastModified: new Date() })), ...(properties as any[]).map((property) => ({ url: `${baseUrl}/projects/${property.slug?.current ?? property._id}`, lastModified: new Date() }))];
 }

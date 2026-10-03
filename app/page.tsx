@@ -45,13 +45,6 @@ type SiteSettings = {
 
 const navItems = [["Projects", "/projects"], ["Site Visit", "/site-visit"], ["About", "/about"], ["Blog", "/blog"], ["FAQs", "/faqs"]];
 
-const fallbackSettings: SiteSettings = {
-  whatsappNumber: "254700000000",
-  phoneNumber: "+254 700 000 000",
-  email: "hello@ukooafricahomes.co.ke",
-  officeAddress: "Juja, Kiambu County\nKenya",
-};
-
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [location, setLocation] = useState("All locations");
@@ -82,9 +75,12 @@ export default function Home() {
     [properties],
   );
 
-  const currentSettings = settings ?? fallbackSettings;
-  const officeLines = (currentSettings.officeAddress || fallbackSettings.officeAddress || "").split("\n").filter(Boolean);
-  const whatsappHref = `https://wa.me/${(currentSettings.whatsappNumber || fallbackSettings.whatsappNumber || "254700000000").replace(/\s+/g, "")}?text=${encodeURIComponent("Hi, I'm interested in your properties")}`;
+  const currentSettings = settings ?? {};
+  const officeLines = (currentSettings.officeAddress || "").split("\n").filter(Boolean);
+  const phoneNumber = currentSettings.phoneNumber || "";
+  const email = currentSettings.email || "";
+  const whatsappNumber = currentSettings.whatsappNumber || "";
+  const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\s+/g, "")}?text=${encodeURIComponent("Hi, I'm interested in your properties")}` : undefined;
 
   return (
     <div className="min-h-screen overflow-hidden bg-stone">
@@ -98,7 +94,7 @@ export default function Home() {
             {navItems.map(([label, href]) => <a key={label} href={href} className="hover:text-earth">{label}</a>)}
           </nav>
           <div className="hidden items-center gap-5 lg:flex">
-            <a href={`tel:${(currentSettings.phoneNumber || "+254700000000").replace(/\s+/g, "")}`} className="text-sm text-white/80 hover:text-white">{currentSettings.phoneNumber || "+254 700 000 000"}</a>
+            {phoneNumber && <a href={`tel:${phoneNumber.replace(/\s+/g, "")}`} className="text-sm text-white/80 hover:text-white">{phoneNumber}</a>}
             <a href="#visit" className="flex items-center gap-2 rounded-lg bg-earth px-4 py-3 text-sm font-semibold text-ink hover:bg-earth-light">Book a visit <ArrowUpRight size={16} /></a>
           </div>
           <button className="rounded-lg border border-white/30 p-2 text-white lg:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle menu">{menuOpen ? <X /> : <Menu />}</button>
@@ -169,10 +165,10 @@ export default function Home() {
 
         <section className="border-y border-mist bg-chalk"><div className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-24"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">Stories from home</p><h2 className="font-display text-4xl text-forest md:text-5xl">Good decisions feel<br /><em className="text-earth">even better.</em></h2></div><div className="flex gap-1 text-earth"><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /></div></div><div className="mt-12 grid gap-6 md:grid-cols-3">{testimonials.map((testimonial) => <figure key={testimonial._id} className="border-t-2 border-earth pt-6"><blockquote className="font-display text-2xl leading-snug text-forest">&ldquo;{testimonial.quote}&rdquo;</blockquote><figcaption className="mt-6 text-sm text-slate"><strong className="text-ink">{testimonial.name}</strong><br />{testimonial.role || "Home Owner"}</figcaption></figure>)}</div></div></section>
 
-        <section id="visit" className="relative overflow-hidden bg-canopy"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border border-white/10" /><div className="absolute -right-5 -top-5 h-44 w-44 rounded-full border border-white/10" /><div className="relative mx-auto flex max-w-[1200px] flex-col justify-between gap-10 px-5 py-20 md:flex-row md:items-center md:px-10 md:py-24"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-earth-light">Your next chapter starts here</p><h2 className="max-w-[600px] font-display text-4xl leading-tight text-white md:text-6xl">Ready to stop<br /><em className="text-earth-light">renting?</em></h2><p className="mt-5 max-w-[470px] leading-7 text-white/75">Come see the possibilities for yourself. No pressure, just honest answers and a team that listens.</p></div><a href={whatsappHref} className="flex w-fit items-center gap-3 rounded-lg bg-earth px-6 py-4 text-sm font-semibold text-ink hover:bg-earth-light">Chat on WhatsApp <ArrowUpRight size={17} /></a></div></section>
+        <section id="visit" className="relative overflow-hidden bg-canopy"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border border-white/10" /><div className="absolute -right-5 -top-5 h-44 w-44 rounded-full border border-white/10" /><div className="relative mx-auto flex max-w-[1200px] flex-col justify-between gap-10 px-5 py-20 md:flex-row md:items-center md:px-10 md:py-24"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-earth-light">Your next chapter starts here</p><h2 className="max-w-[600px] font-display text-4xl leading-tight text-white md:text-6xl">Ready to stop<br /><em className="text-earth-light">renting?</em></h2><p className="mt-5 max-w-[470px] leading-7 text-white/75">Come see the possibilities for yourself. No pressure, just honest answers and a team that listens.</p></div>{whatsappHref && <a href={whatsappHref} className="flex w-fit items-center gap-3 rounded-lg bg-earth px-6 py-4 text-sm font-semibold text-ink hover:bg-earth-light">Chat on WhatsApp <ArrowUpRight size={17} /></a>}</div></section>
       </main>
 
-      <footer className="bg-forest text-white"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-10"><div><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg border border-earth/70 text-earth"><House size={21} strokeWidth={1.8} /></span><span className="font-display text-xl">ukoo<span className="text-earth">.</span></span></div><p className="mt-5 max-w-[280px] text-sm leading-6 text-white/60">Building more than homes. Creating places to belong, grow and live free.</p></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Explore</p><div className="grid gap-3 text-sm text-white/70"><a href="#projects" className="hover:text-white">Projects</a><a href="#visit" className="hover:text-white">Book a site visit</a><a href="#about" className="hover:text-white">About Ukoo</a><a href="#faqs" className="hover:text-white">FAQs</a></div></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Contact</p><div className="grid gap-3 text-sm text-white/70"><a href={`tel:${(currentSettings.phoneNumber || "+254700000000").replace(/\s+/g, "")}`} className="hover:text-white">{currentSettings.phoneNumber || "+254 700 000 000"}</a><a href={`mailto:${currentSettings.email || "hello@ukooafricahomes.co.ke"}`} className="hover:text-white">{currentSettings.email || "hello@ukooafricahomes.co.ke"}</a><div className="text-white/70">{officeLines.map((line) => <div key={line}>{line}</div>)}</div></div></div></div><div className="border-t border-white/10"><div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-3 px-5 py-5 text-xs text-white/45 md:flex-row md:px-10"><p>© 2026 Ukoo Africa Homes Ltd. All rights reserved.</p><p>Integrity. Affordability. Quality.</p></div></div></footer>
+      <footer className="bg-forest text-white"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-10"><div><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg border border-earth/70 text-earth"><House size={21} strokeWidth={1.8} /></span><span className="font-display text-xl">ukoo<span className="text-earth">.</span></span></div><p className="mt-5 max-w-[280px] text-sm leading-6 text-white/60">Building more than homes. Creating places to belong, grow and live free.</p></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Explore</p><div className="grid gap-3 text-sm text-white/70"><a href="#projects" className="hover:text-white">Projects</a><a href="#visit" className="hover:text-white">Book a site visit</a><a href="#about" className="hover:text-white">About Ukoo</a><a href="#faqs" className="hover:text-white">FAQs</a></div></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Contact</p><div className="grid gap-3 text-sm text-white/70">{phoneNumber && <a href={`tel:${phoneNumber.replace(/\s+/g, "")}`} className="hover:text-white">{phoneNumber}</a>}{email && <a href={`mailto:${email}`} className="hover:text-white">{email}</a>}<div className="text-white/70">{officeLines.map((line) => <div key={line}>{line}</div>)}</div></div></div></div><div className="border-t border-white/10"><div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-3 px-5 py-5 text-xs text-white/45 md:flex-row md:px-10"><p>© 2026 Ukoo Africa Homes Ltd. All rights reserved.</p><p>Integrity. Affordability. Quality.</p></div></div></footer>
     </div>
   );
 }

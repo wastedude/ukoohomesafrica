@@ -4,6 +4,8 @@ import "./globals.css";
 import { client } from "@/sanity/lib/client";
 import { SITE_SETTINGS_QUERY } from "@/sanity/lib/queries";
 
+export const dynamic = "force-dynamic";
+
 const display = DM_Serif_Display({
   variable: "--font-display",
   weight: "400",

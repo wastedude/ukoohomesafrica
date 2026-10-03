@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
   Check,
+  ChevronLeft,
+  ChevronRight,
   HeartHandshake,
   House,
   MapPin,
@@ -16,6 +18,9 @@ import {
 } from "lucide-react";
 
 import { urlFor } from "@/sanity/lib/image";
+import { siteContact } from "@/lib/site-contact";
+import { FaLinkedinIn } from "react-icons/fa6";
+import { SiFacebook, SiInstagram, SiWhatsapp } from "react-icons/si";
 
 type CmsProperty = {
   _id: string;
@@ -36,11 +41,10 @@ type CmsTestimonial = {
   quote: string;
 };
 
-type SiteSettings = {
-  whatsappNumber?: string;
-  phoneNumber?: string;
-  email?: string;
-  officeAddress?: string;
+type CmsSocialLinks = {
+  linkedin?: string;
+  instagram?: string;
+  facebook?: string;
 };
 
 const navItems = [["Projects", "/projects"], ["Site Visit", "/site-visit"], ["About", "/about"], ["Blog", "/blog"], ["FAQs", "/faqs"]];
@@ -50,7 +54,9 @@ export default function Home() {
   const [location, setLocation] = useState("All locations");
   const [properties, setProperties] = useState<CmsProperty[]>([]);
   const [testimonials, setTestimonials] = useState<CmsTestimonial[]>([]);
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [socialLinks, setSocialLinks] = useState<CmsSocialLinks>({});
+  const [whatsappOpen, setWhatsappOpen] = useState(false);
+  const propertiesRowRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/content", { cache: "no-store" })
@@ -58,29 +64,57 @@ export default function Home() {
         if (!response.ok) throw new Error("Unable to load CMS content");
         return response.json();
       })
-      .then(({ properties: propertiesResult, testimonials: testimonialsResult, settings: settingsResult }) => {
+      .then(({ properties: propertiesResult, testimonials: testimonialsResult, settings }) => {
         setProperties(Array.isArray(propertiesResult) ? propertiesResult : []);
         setTestimonials(Array.isArray(testimonialsResult) ? testimonialsResult : []);
-        setSettings(settingsResult ?? null);
+        setSocialLinks(settings ?? {});
       })
       .catch(() => {
         setProperties([]);
         setTestimonials([]);
-        setSettings(null);
+        setSocialLinks({});
       });
   }, []);
+
+  const visibleProperties = useMemo(
+    () => properties.filter((property) => location === "All locations" || property.location === location),
+    [location, properties],
+  );
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      const row = propertiesRowRef.current;
+      if (!row || row.scrollWidth <= row.clientWidth) return;
+
+      const nextPosition = row.scrollLeft + 360;
+      const cycleWidth = row.scrollWidth / 2;
+
+      if (nextPosition >= cycleWidth) {
+        row.scrollTo({ left: nextPosition - cycleWidth, behavior: "auto" });
+      } else {
+        row.scrollTo({ left: nextPosition, behavior: "smooth" });
+      }
+    }, 3000);
+
+    return () => window.clearInterval(interval);
+  }, [visibleProperties.length]);
 
   const locationOptions = useMemo(
     () => ["All locations", ...new Set(properties.map((property) => property.location).filter(Boolean) as string[])],
     [properties],
   );
 
-  const currentSettings = settings ?? {};
-  const officeLines = (currentSettings.officeAddress || "").split("\n").filter(Boolean);
-  const phoneNumber = currentSettings.phoneNumber || "";
-  const email = currentSettings.email || "";
-  const whatsappNumber = currentSettings.whatsappNumber || "";
-  const whatsappHref = whatsappNumber ? `https://wa.me/${whatsappNumber.replace(/\s+/g, "")}?text=${encodeURIComponent("Hi, I'm interested in your properties")}` : undefined;
+  const officeLines = siteContact.officeAddress.split("\n").filter(Boolean);
+  const phoneNumber = siteContact.phoneNumber;
+  const email = siteContact.email;
+  const whatsappHref = `https://wa.me/${siteContact.whatsappNumber}?text=${encodeURIComponent("Hi, I'm interested in your properties")}`;
+
+  const scrollProperties = (direction: "left" | "right") => {
+    propertiesRowRef.current?.scrollBy({
+      left: direction === "right" ? 360 : -360,
+      behavior: "smooth",
+    });
+  };
 
   return (
     <div className="min-h-screen overflow-hidden bg-stone">
@@ -133,12 +167,14 @@ export default function Home() {
               <a href="#all-projects" className="hidden items-center gap-2 text-sm font-semibold text-forest hover:text-canopy sm:flex">View all <ArrowRight size={16} /></a>
             </div>
           </div>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {properties.filter((property) => location === "All locations" || property.location === location).map((property) => {
+          <div className="relative">
+            <button type="button" onClick={() => scrollProperties("left")} className="absolute -left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-mist bg-chalk/95 text-forest shadow-md transition hover:border-canopy hover:bg-earth-light" aria-label="Show previous properties"><ChevronLeft size={20} /></button>
+            <div ref={propertiesRowRef} className="hide-scrollbar flex snap-x scroll-smooth gap-6 overflow-x-auto pb-4">
+            {[...visibleProperties, ...visibleProperties].map((property, index) => {
               const imageUrl = property.mainImage ? urlFor(property.mainImage).width(900).url() : "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=85";
 
               return (
-                <article key={property._id} className="group overflow-hidden rounded-lg bg-chalk">
+                <article key={`${property._id}-${index}`} className="group w-[82vw] min-w-[280px] max-w-[360px] shrink-0 snap-start overflow-hidden rounded-lg bg-chalk sm:w-[320px]">
                   <div className="relative aspect-[1.08] overflow-hidden bg-earth-light">
                     <div className="absolute inset-0 bg-cover bg-center transition duration-500 group-hover:scale-105" style={{ backgroundImage: `url(${imageUrl})` }} />
                     <span className="absolute left-4 top-4 rounded bg-forest px-2.5 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-white">{property.status || "For Sale"}</span>
@@ -156,6 +192,8 @@ export default function Home() {
                 </article>
               );
             })}
+            </div>
+            <button type="button" onClick={() => scrollProperties("right")} className="absolute -right-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-mist bg-chalk/95 text-forest shadow-md transition hover:border-canopy hover:bg-earth-light" aria-label="Show more properties"><ChevronRight size={20} /></button>
           </div>
         </section>
 
@@ -165,10 +203,11 @@ export default function Home() {
 
         <section className="border-y border-mist bg-chalk"><div className="mx-auto max-w-[1200px] px-5 py-20 md:px-10 md:py-24"><div className="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-canopy">Stories from home</p><h2 className="font-display text-4xl text-forest md:text-5xl">Good decisions feel<br /><em className="text-earth">even better.</em></h2></div><div className="flex gap-1 text-earth"><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /><Star size={17} fill="currentColor" /></div></div><div className="mt-12 grid gap-6 md:grid-cols-3">{testimonials.map((testimonial) => <figure key={testimonial._id} className="border-t-2 border-earth pt-6"><blockquote className="font-display text-2xl leading-snug text-forest">&ldquo;{testimonial.quote}&rdquo;</blockquote><figcaption className="mt-6 text-sm text-slate"><strong className="text-ink">{testimonial.name}</strong><br />{testimonial.role || "Home Owner"}</figcaption></figure>)}</div></div></section>
 
-        <section id="visit" className="relative overflow-hidden bg-canopy"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border border-white/10" /><div className="absolute -right-5 -top-5 h-44 w-44 rounded-full border border-white/10" /><div className="relative mx-auto flex max-w-[1200px] flex-col justify-between gap-10 px-5 py-20 md:flex-row md:items-center md:px-10 md:py-24"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-earth-light">Your next chapter starts here</p><h2 className="max-w-[600px] font-display text-4xl leading-tight text-white md:text-6xl">Ready to stop<br /><em className="text-earth-light">renting?</em></h2><p className="mt-5 max-w-[470px] leading-7 text-white/75">Come see the possibilities for yourself. No pressure, just honest answers and a team that listens.</p></div>{whatsappHref && <a href={whatsappHref} className="flex w-fit items-center gap-3 rounded-lg bg-earth px-6 py-4 text-sm font-semibold text-ink hover:bg-earth-light">Chat on WhatsApp <ArrowUpRight size={17} /></a>}</div></section>
+        <section id="visit" className="relative overflow-hidden bg-canopy"><div className="absolute -right-20 -top-20 h-72 w-72 rounded-full border border-white/10" /><div className="absolute -right-5 -top-5 h-44 w-44 rounded-full border border-white/10" /><div className="relative mx-auto flex max-w-[1200px] flex-col justify-between gap-10 px-5 py-20 md:flex-row md:items-center md:px-10 md:py-24"><div><p className="mb-4 text-xs font-semibold uppercase tracking-[0.18em] text-earth-light">Your next chapter starts here</p><h2 className="max-w-[600px] font-display text-4xl leading-tight text-white md:text-6xl">Ready to stop<br /><em className="text-earth-light">renting?</em></h2><p className="mt-5 max-w-[470px] leading-7 text-white/75">Come see the possibilities for yourself. No pressure, just honest answers and a team that listens.</p></div>{whatsappHref && <a href={whatsappHref} className="flex w-fit items-center gap-3 rounded-lg bg-[#25D366] px-6 py-4 text-sm font-semibold text-white shadow-lg shadow-[#128C7E]/20 transition hover:bg-[#20bd5a]"><SiWhatsapp size={20} /> Chat on WhatsApp <ArrowUpRight size={17} /></a>}</div></section>
       </main>
 
-      <footer className="bg-forest text-white"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-10"><div><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg border border-earth/70 text-earth"><House size={21} strokeWidth={1.8} /></span><span className="font-display text-xl">ukoo<span className="text-earth">.</span></span></div><p className="mt-5 max-w-[280px] text-sm leading-6 text-white/60">Building more than homes. Creating places to belong, grow and live free.</p></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Explore</p><div className="grid gap-3 text-sm text-white/70"><a href="#projects" className="hover:text-white">Projects</a><a href="#visit" className="hover:text-white">Book a site visit</a><a href="#about" className="hover:text-white">About Ukoo</a><a href="#faqs" className="hover:text-white">FAQs</a></div></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Contact</p><div className="grid gap-3 text-sm text-white/70">{phoneNumber && <a href={`tel:${phoneNumber.replace(/\s+/g, "")}`} className="hover:text-white">{phoneNumber}</a>}{email && <a href={`mailto:${email}`} className="hover:text-white">{email}</a>}<div className="text-white/70">{officeLines.map((line) => <div key={line}>{line}</div>)}</div></div></div></div><div className="border-t border-white/10"><div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-3 px-5 py-5 text-xs text-white/45 md:flex-row md:px-10"><p>© 2026 Ukoo Africa Homes Ltd. All rights reserved.</p><p>Integrity. Affordability. Quality.</p></div></div></footer>
+      <footer className="bg-forest text-white"><div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr] md:px-10"><div><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-lg border border-earth/70 text-earth"><House size={21} strokeWidth={1.8} /></span><span className="font-display text-xl">ukoo<span className="text-earth">.</span></span></div><p className="mt-5 max-w-[280px] text-sm leading-6 text-white/60">Building more than homes. Creating places to belong, grow and live free.</p></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Explore</p><div className="grid gap-3 text-sm text-white/70"><a href="#projects" className="hover:text-white">Projects</a><a href="#visit" className="hover:text-white">Book a site visit</a><a href="#about" className="hover:text-white">About Ukoo</a><a href="#faqs" className="hover:text-white">FAQs</a></div></div><div><p className="mb-5 text-xs font-semibold uppercase tracking-[0.18em] text-earth">Contact</p><div className="grid gap-3 text-sm text-white/70">{phoneNumber && <a href={`tel:${phoneNumber.replace(/\s+/g, "")}`} className="hover:text-white">{phoneNumber}</a>}{email && <a href={`mailto:${email}`} className="hover:text-white">{email}</a>}<div className="text-white/70">{officeLines.map((line) => <div key={line}>{line}</div>)}</div><div className="mt-3 flex items-center gap-3">{socialLinks.linkedin && <a href={socialLinks.linkedin} target="_blank" rel="noreferrer" aria-label="LinkedIn" className="text-white/70 transition hover:text-white"><FaLinkedinIn size={18} /></a>}{socialLinks.instagram && <a href={socialLinks.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="text-white/70 transition hover:text-white"><SiInstagram size={18} /></a>}{socialLinks.facebook && <a href={socialLinks.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="text-white/70 transition hover:text-white"><SiFacebook size={18} /></a>}</div></div></div></div><div className="border-t border-white/10"><div className="mx-auto flex max-w-[1200px] flex-col justify-between gap-3 px-5 py-5 text-xs text-white/45 md:flex-row md:px-10"><p>© 2026 Ukoo Africa Homes Ltd. All rights reserved.</p><p>Integrity. Affordability. Quality.</p></div></div></footer>
+      {whatsappHref && <div className="group fixed bottom-5 right-5 z-40"><div className={`flex h-14 overflow-hidden rounded-full bg-[#25D366] shadow-lg shadow-[#128C7E]/35 transition-[width,transform] duration-300 ease-out ${whatsappOpen ? "w-[174px]" : "w-14 group-hover:w-[174px]"}`}><a href={whatsappHref} className={`flex min-w-0 flex-1 items-center justify-center overflow-hidden whitespace-nowrap text-sm font-semibold text-white transition-opacity duration-200 ${whatsappOpen ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>Chat with us</a><button type="button" onClick={() => setWhatsappOpen(!whatsappOpen)} className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-[#25D366] text-white transition hover:bg-[#20bd5a]" aria-label={whatsappOpen ? "Close WhatsApp contact" : "Open WhatsApp contact"} aria-expanded={whatsappOpen}><SiWhatsapp size={28} /></button></div></div>}
     </div>
   );
 }

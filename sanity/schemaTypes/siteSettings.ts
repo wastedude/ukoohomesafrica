@@ -9,6 +9,7 @@ export const siteSettings = defineType({
     defineField({name: 'phoneNumber', type: 'string'}),
     defineField({name: 'email', type: 'email'}),
     defineField({name: 'officeAddress', type: 'string'}),
+    defineField({name: 'linkedin', title: 'LinkedIn URL', type: 'url'}),
     defineField({name: 'facebook', type: 'url'}),
     defineField({name: 'instagram', type: 'url'}),
     defineField({name: 'tiktok', type: 'url'}),

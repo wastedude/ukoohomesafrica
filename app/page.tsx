@@ -15,9 +15,7 @@ import {
   X,
 } from "lucide-react";
 
-import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
-import { ALL_PROPERTIES_QUERY, SITE_SETTINGS_QUERY, TESTIMONIALS_QUERY } from "@/sanity/lib/queries";
 
 type CmsProperty = {
   _id: string;
@@ -62,12 +60,12 @@ export default function Home() {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      client.fetch(ALL_PROPERTIES_QUERY),
-      client.fetch(TESTIMONIALS_QUERY),
-      client.fetch(SITE_SETTINGS_QUERY),
-    ])
-      .then(([propertiesResult, testimonialsResult, settingsResult]) => {
+    fetch("/api/content", { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Unable to load CMS content");
+        return response.json();
+      })
+      .then(({ properties: propertiesResult, testimonials: testimonialsResult, settings: settingsResult }) => {
         setProperties(Array.isArray(propertiesResult) ? propertiesResult : []);
         setTestimonials(Array.isArray(testimonialsResult) ? testimonialsResult : []);
         setSettings(settingsResult ?? null);

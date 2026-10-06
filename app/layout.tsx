@@ -23,17 +23,34 @@ export const metadata: Metadata = {
     "Affordable plots and homes in Juja, Thika and the Superhighway corridor, with genuine title deeds and flexible payment plans.",
   metadataBase: new URL("https://www.ukooafricahomes.co.ke"),
   alternates: { canonical: "/" },
+  icons: {
+    icon: [
+      {
+        url: "/favicon.ico",
+        type: "image/x-icon",
+        sizes: "16x16 32x32 48x48 64x64 128x128 256x256",
+      },
+      { url: "/TAG1.png", type: "image/png", sizes: "1200x1200" },
+    ],
+    shortcut: "/favicon.ico",
+    apple: "/TAG1.png",
+  },
   openGraph: {
     title: "Ukoo Africa Homes | Own Land. Build Home. Live Free.",
     description: "Affordable land and homes for sale across Kenya.",
     type: "website",
     url: "https://www.ukooafricahomes.co.ke",
+    images: [{ url: "/TAG1.png", alt: "Ukoo Africa Homes" }],
+  },
+  twitter: {
+    card: "summary",
+    images: ["/TAG1.png"],
   },
 };
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${inter.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${display.variable} ${inter.variable}`}>
       <body>
         {children}
         <script

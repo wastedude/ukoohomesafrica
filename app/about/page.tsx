@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import { ArrowLeft, ArrowRight, HeartHandshake, House, Lightbulb, ShieldCheck, Sparkles, Users } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
 
 const values = [
   [ShieldCheck, "Integrity", "We lead with honesty, transparent communication, and documentation you can understand."],
@@ -12,6 +13,7 @@ const values = [
 export default function AboutPage() {
   return (
     <main className="min-h-screen bg-stone">
+      <SiteHeader />
       <div className="bg-earth-light px-5 pb-20 pt-10 md:px-10 md:pb-28">
         <div className="mx-auto max-w-[1200px]">
           <a href="/" className="inline-flex items-center gap-2 text-sm text-forest"><ArrowLeft size={15} /> Back home</a>

@@ -7,10 +7,16 @@ import { notFound } from "next/navigation";
 import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { ALL_PROPERTIES_QUERY, PROPERTY_BY_SLUG_QUERY } from "@/sanity/lib/queries";
+import { SiteHeader } from "@/components/site-header";
+
+type PropertySummary = {
+  _id: string;
+  slug?: { current: string };
+};
 
 export async function generateStaticParams() {
   const properties = await client.fetch(ALL_PROPERTIES_QUERY);
-  return (properties as any[]).map((property) => ({ slug: property.slug?.current ?? property._id }));
+  return (properties as PropertySummary[]).map((property) => ({ slug: property.slug?.current ?? property._id }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -31,18 +37,19 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="min-h-screen bg-stone">
+      <SiteHeader />
       <div className="bg-forest px-5 pb-16 pt-10 text-white md:px-10 md:pb-24">
         <div className="mx-auto max-w-[1200px]">
           <a href="/projects" className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-earth"><ArrowLeft size={15} /> All projects</a>
-          <div className="mt-16 max-w-[750px]">
+          <div className="mt-14 max-w-[750px] md:mt-16">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-earth">{property.type}</p>
-            <h1 className="mt-5 font-display text-5xl leading-none md:text-7xl">{property.title}</h1>
+            <h1 className="mt-5 font-display text-[clamp(2.75rem,6vw,5.5rem)] leading-[0.92]">{property.title}</h1>
           </div>
         </div>
       </div>
-      <div className="mx-auto grid max-w-[1200px] gap-12 px-5 py-16 md:grid-cols-[1.2fr_0.8fr] md:px-10 md:py-24">
+      <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-16 md:grid-cols-[1.2fr_0.8fr] md:gap-12 md:px-10 md:py-24">
         <div>
-          <div className="aspect-[1.35] rounded-lg bg-cover bg-center" style={{ backgroundImage: `url(${imageUrl})` }} />
+          <div className="aspect-[1.35] rounded-lg bg-cover bg-center shadow-sm" role="img" aria-label={property.title} style={{ backgroundImage: `url(${imageUrl})` }} />
           <div className="mt-10">
             <p className="flex items-center gap-2 text-sm text-slate"><MapPin size={16} className="text-earth" /> {property.location} <span className="text-mist">|</span> {property.size}</p>
             <h2 className="mt-6 font-display text-4xl text-forest">A place to build from.</h2>

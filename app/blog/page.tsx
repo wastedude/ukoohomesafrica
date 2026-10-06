@@ -1,10 +1,18 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import { ArrowLeft, ArrowRight, CalendarDays } from "lucide-react";
+import type { Metadata } from "next";
 
 import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { BLOG_POSTS_QUERY } from "@/sanity/lib/queries";
 import { SiteHeader } from "@/components/site-header";
+
+export const metadata: Metadata = {
+  title: "Property Guides and Real Estate News in Kenya | Ukoo Africa Homes",
+  description:
+    "Practical property buying guides, market news and home ownership advice for buyers and investors in Kenya.",
+  alternates: { canonical: "/blog" },
+};
 
 type BlogPostSummary = {
   _id: string;

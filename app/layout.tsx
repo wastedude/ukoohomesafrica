@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { DM_Serif_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { siteContact } from "@/lib/site-contact";
+import { absoluteUrl, defaultDescription, siteName, siteUrl } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -19,9 +20,8 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "Ukoo Africa Homes | Own Land. Build Home. Live Free.",
-  description:
-    "Affordable plots and homes in Juja, Thika and the Superhighway corridor, with genuine title deeds and flexible payment plans.",
-  metadataBase: new URL("https://www.ukooafricahomes.co.ke"),
+  description: defaultDescription,
+  metadataBase: new URL(siteUrl),
   alternates: { canonical: "/" },
   icons: {
     icon: [
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     title: "Ukoo Africa Homes | Own Land. Build Home. Live Free.",
     description: "Affordable land and homes for sale across Kenya.",
     type: "website",
-    url: "https://www.ukooafricahomes.co.ke",
+    url: siteUrl,
     images: [{ url: "/TAG1.png", alt: "Ukoo Africa Homes" }],
   },
   twitter: {
@@ -58,12 +58,38 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           dangerouslySetInnerHTML={{
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "RealEstateAgent",
-              name: "Ukoo Africa Homes Ltd",
-              url: "https://www.ukooafricahomes.co.ke",
-              areaServed: "Kenya",
-              telephone: siteContact.phoneNumber,
-              email: siteContact.email,
+              "@graph": [
+                {
+                  "@type": "RealEstateAgent",
+                  "@id": `${siteUrl}/#organization`,
+                  name: "Ukoo Africa Homes Ltd",
+                  url: siteUrl,
+                  logo: absoluteUrl("/TAG1.png"),
+                  image: absoluteUrl("/TAG1.png"),
+                  areaServed: ["Juja", "Thika", "Thika Superhighway", "Kenya"],
+                  address: {
+                    "@type": "PostalAddress",
+                    addressLocality: "Juja",
+                    addressRegion: "Kiambu County",
+                    addressCountry: "KE",
+                  },
+                  telephone: siteContact.phoneNumber,
+                  email: siteContact.email,
+                  sameAs: [],
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": `${siteUrl}/#website`,
+                  name: siteName,
+                  url: siteUrl,
+                  publisher: { "@id": `${siteUrl}/#organization` },
+                  potentialAction: {
+                    "@type": "SearchAction",
+                    target: `${siteUrl}/projects?query={search_term_string}`,
+                    "query-input": "required name=search_term_string",
+                  },
+                },
+              ],
             }),
           }}
         />

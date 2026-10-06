@@ -8,6 +8,7 @@ import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { ALL_PROPERTIES_QUERY, PROPERTY_BY_SLUG_QUERY } from "@/sanity/lib/queries";
 import { SiteHeader } from "@/components/site-header";
+import { absoluteUrl } from "@/lib/seo";
 
 type PropertySummary = {
   _id: string;
@@ -24,7 +25,20 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const property = await client.fetch(PROPERTY_BY_SLUG_QUERY, { slug });
 
   return property
-    ? { title: `${property.title} | Ukoo Africa Homes`, description: `${property.priceLabel || property.price || "Property details"} - ${property.type} in ${property.location}.` }
+    ? {
+        title: `${property.title} | ${property.type} in ${property.location} | Ukoo Africa Homes`,
+        description: `${property.priceLabel || property.price || "Property details"} - ${property.type} in ${property.location}. Explore location, features, pricing and ownership details.`,
+        alternates: { canonical: `/projects/${slug}` },
+        openGraph: {
+          title: `${property.title} | Ukoo Africa Homes`,
+          description: `${property.type} in ${property.location}.`,
+          url: absoluteUrl(`/projects/${slug}`),
+          type: "website",
+          images: property.mainImage
+            ? [{ url: urlFor(property.mainImage).width(1200).url(), alt: property.title }]
+            : [{ url: absoluteUrl("/TAG1.png"), alt: "Ukoo Africa Homes" }],
+        },
+      }
     : {};
 }
 
@@ -37,6 +51,34 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="min-h-screen bg-stone">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: property.title,
+        description: `${property.type} in ${property.location}.`,
+        image: [imageUrl],
+        url: absoluteUrl(`/projects/${slug}`),
+        brand: { "@type": "Brand", name: "Ukoo Africa Homes" },
+        offers: property.price ? {
+          "@type": "Offer",
+          price: property.price,
+          priceCurrency: "KES",
+          availability: property.status === "Sold"
+            ? "https://schema.org/SoldOut"
+            : "https://schema.org/InStock",
+          url: absoluteUrl(`/projects/${slug}`),
+        } : undefined,
+        address: property.address ? {
+          "@type": "PostalAddress",
+          streetAddress: property.address,
+          addressCountry: "KE",
+        } : undefined,
+        geo: property.coordinates ? {
+          "@type": "GeoCoordinates",
+          latitude: property.coordinates.lat,
+          longitude: property.coordinates.lng,
+        } : undefined,
+      }) }} />
       <SiteHeader />
       <div className="bg-forest px-5 pb-16 pt-10 text-white md:px-10 md:pb-24">
         <div className="mx-auto max-w-[1200px]">

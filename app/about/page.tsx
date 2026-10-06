@@ -1,6 +1,14 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import { ArrowLeft, ArrowRight, HeartHandshake, House, Lightbulb, ShieldCheck, Sparkles, Users } from "lucide-react";
+import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
+
+export const metadata: Metadata = {
+  title: "About Ukoo Africa Homes | Trusted Property Developers in Kenya",
+  description:
+    "Learn how Ukoo Africa Homes helps Kenyan families and investors own secure, affordable land and homes in Juja, Thika and beyond.",
+  alternates: { canonical: "/about" },
+};
 
 const values = [
   [ShieldCheck, "Integrity", "We lead with honesty, transparent communication, and documentation you can understand."],

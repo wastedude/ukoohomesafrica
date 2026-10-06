@@ -8,6 +8,7 @@ import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { BLOG_POSTS_QUERY } from "@/sanity/lib/queries";
 import { SiteHeader } from "@/components/site-header";
+import { absoluteUrl } from "@/lib/seo";
 
 type BlogPostSummary = {
   _id: string;
@@ -35,7 +36,21 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const post = await client.fetch(POST_BY_SLUG_QUERY, { slug });
 
   return post
-    ? { title: `${post.title} | Ukoo Africa Homes`, description: post.excerpt || "Read our latest property insight." }
+    ? {
+        title: `${post.title} | Ukoo Africa Homes`,
+        description: post.excerpt || "Read practical property insights from Ukoo Africa Homes.",
+        alternates: { canonical: `/blog/${slug}` },
+        openGraph: {
+          title: post.title,
+          description: post.excerpt || "Read our latest property insight.",
+          url: absoluteUrl(`/blog/${slug}`),
+          type: "article",
+          publishedTime: post.publishedAt,
+          images: post.mainImage
+            ? [{ url: urlFor(post.mainImage).width(1200).url(), alt: post.title }]
+            : [{ url: absoluteUrl("/TAG1.png"), alt: "Ukoo Africa Homes" }],
+        },
+      }
     : {};
 }
 
@@ -50,6 +65,21 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
 
   return (
     <main className="min-h-screen bg-stone">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+        "@context": "https://schema.org",
+        "@type": "Article",
+        headline: post.title,
+        description: post.excerpt,
+        image: [imageUrl],
+        datePublished: post.publishedAt,
+        author: { "@type": "Organization", name: "Ukoo Africa Homes" },
+        publisher: {
+          "@type": "Organization",
+          name: "Ukoo Africa Homes Ltd",
+          logo: { "@type": "ImageObject", url: absoluteUrl("/TAG1.png") },
+        },
+        mainEntityOfPage: absoluteUrl(`/blog/${slug}`),
+      }) }} />
       <SiteHeader />
       <div className="bg-earth-light px-5 pb-20 pt-10 md:px-10 md:pb-28">
         <div className="mx-auto max-w-[1200px]">

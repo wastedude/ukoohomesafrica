@@ -1,10 +1,18 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import { ArrowRight, MapPin } from "lucide-react";
+import type { Metadata } from "next";
 
 import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import { ALL_PROPERTIES_QUERY } from "@/sanity/lib/queries";
 import { SiteHeader } from "@/components/site-header";
+import { defaultDescription } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: "Land and Homes for Sale in Kenya | Ukoo Africa Homes",
+  description: defaultDescription,
+  alternates: { canonical: "/projects" },
+};
 
 type PropertySummary = {
   _id: string;

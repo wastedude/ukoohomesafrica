@@ -1,7 +1,15 @@
 /* eslint-disable @next/next/no-html-link-for-pages */
 import { ArrowLeft, ArrowRight, CalendarDays, Check, MapPin } from "lucide-react";
+import type { Metadata } from "next";
 
 import { SiteHeader } from "@/components/site-header";
+
+export const metadata: Metadata = {
+  title: "Book a Free Site Visit in Juja or Thika | Ukoo Africa Homes",
+  description:
+    "Book a free guided site visit to explore Ukoo Africa Homes developments in Juja, Thika and surrounding areas.",
+  alternates: { canonical: "/site-visit" },
+};
 
 export default function SiteVisitPage() {
   return (

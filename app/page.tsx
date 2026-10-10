@@ -60,7 +60,6 @@ export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoadingContent, setIsLoadingContent] = useState(true);
   const propertiesRowRef = useRef<HTMLDivElement>(null);
-  const isCarouselPausedRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/content", { cache: "no-store" })
@@ -93,23 +92,31 @@ export default function Home() {
   );
 
   useEffect(() => {
-    const interval = window.setInterval(() => {
+    let animationFrame = 0;
+    let lastTimestamp = 0;
+
+    const animate = (timestamp: number) => {
       const row = propertiesRowRef.current;
-      if (isCarouselPausedRef.current || !row || visibleProperties.length === 0) return;
+      if (row && visibleProperties.length > 0) {
+        const firstClone = row.children[visibleProperties.length] as HTMLElement | undefined;
+        const cycleWidth = firstClone?.offsetLeft ?? 0;
 
-      const firstClone = row.children[visibleProperties.length] as HTMLElement | undefined;
-      const cycleWidth = firstClone?.offsetLeft ?? 0;
-      if (cycleWidth <= row.clientWidth) return;
+        if (cycleWidth > row.clientWidth) {
+          const elapsed = lastTimestamp ? timestamp - lastTimestamp : 0;
+          row.scrollLeft += Math.min(elapsed, 50) * 0.04;
 
-      const nextPosition = row.scrollLeft + 360;
-      if (nextPosition >= cycleWidth) {
-        row.scrollTo({ left: nextPosition - cycleWidth, behavior: "auto" });
-      } else {
-        row.scrollTo({ left: nextPosition, behavior: "smooth" });
+          if (row.scrollLeft >= cycleWidth) {
+            row.scrollLeft -= cycleWidth;
+          }
+        }
       }
-    }, 3000);
 
-    return () => window.clearInterval(interval);
+      lastTimestamp = timestamp;
+      animationFrame = window.requestAnimationFrame(animate);
+    };
+
+    animationFrame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(animationFrame);
   }, [visibleProperties.length]);
 
   useEffect(() => {
@@ -137,17 +144,9 @@ export default function Home() {
     const cycleWidth = firstClone?.offsetLeft ?? 0;
     if (cycleWidth <= row.clientWidth) return;
 
-    const currentPosition = row.scrollLeft;
     const step = direction === "right" ? 360 : -360;
-    const nextPosition = currentPosition + step;
-
-    if (nextPosition >= cycleWidth) {
-      row.scrollTo({ left: nextPosition - cycleWidth, behavior: "auto" });
-    } else if (nextPosition < 0) {
-      row.scrollTo({ left: cycleWidth + nextPosition, behavior: "auto" });
-    } else {
-      row.scrollTo({ left: nextPosition, behavior: "smooth" });
-    }
+    const nextPosition = Math.max(0, Math.min(row.scrollLeft + step, cycleWidth - row.clientWidth));
+    row.scrollTo({ left: nextPosition, behavior: "smooth" });
   };
 
   const carouselItems = visibleProperties.length > 0 ? [...visibleProperties, ...visibleProperties] : [];
@@ -214,19 +213,7 @@ export default function Home() {
             <button type="button" onClick={() => scrollProperties("left")} className="absolute -left-3 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full border border-mist bg-chalk/95 text-forest shadow-md transition hover:border-canopy hover:bg-earth-light" aria-label="Show previous properties"><ChevronLeft size={20} /></button>
             <div
               ref={propertiesRowRef}
-              className="hide-scrollbar flex snap-x scroll-smooth gap-6 overflow-x-auto pb-4"
-              onMouseEnter={() => {
-                isCarouselPausedRef.current = true;
-              }}
-              onMouseLeave={() => {
-                isCarouselPausedRef.current = false;
-              }}
-              onFocusCapture={() => {
-                isCarouselPausedRef.current = true;
-              }}
-              onBlurCapture={() => {
-                isCarouselPausedRef.current = false;
-              }}
+              className="hide-scrollbar flex gap-6 overflow-x-auto pb-4"
             >
             {isLoadingContent ? Array.from({ length: 3 }).map((_, index) => <div key={`property-skeleton-${index}`} className="h-[390px] w-[82vw] min-w-[280px] max-w-[360px] shrink-0 animate-pulse rounded-lg bg-chalk/70 sm:w-[320px]" />) : carouselItems.map((property, index) => {
               const imageUrl = property.mainImage ? urlFor(property.mainImage).width(900).url() : "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=85";

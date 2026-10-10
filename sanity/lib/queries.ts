@@ -5,4 +5,4 @@ export const PROPERTY_BY_SLUG_QUERY = groq`*[_type == "property" && slug.current
 export const TESTIMONIALS_QUERY = groq`*[_type == "testimonial"] | order(order asc) { _id, name, role, photo, quote, rating }`;
 export const BLOG_POSTS_QUERY = groq`*[_type == "blogPost"] | order(publishedAt desc) { _id, title, slug, excerpt, mainImage, publishedAt, category }`;
 export const BLOG_POST_SLUGS_QUERY = groq`*[_type == "blogPost" && defined(slug.current)] { _id, slug }`;
-export const SITE_SETTINGS_QUERY = groq`*[_type == "siteSettings"][0] { whatsappNumber, phoneNumber, email, officeAddress, linkedin, facebook, instagram, tiktok, formspreeId }`;
+export const SITE_SETTINGS_QUERY = groq`*[_type == "siteSettings"][0] { whatsappNumber, phoneNumber, email, officeAddress, linkedin, facebook, instagram, tiktok }`;

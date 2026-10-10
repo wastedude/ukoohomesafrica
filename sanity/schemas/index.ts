@@ -1,6 +1,6 @@
 const propertySchema = { name: "property", title: "Property", type: "document", fields: ["title", "slug", "status", "type", "price", "priceLabel", "location", "address", "coordinates", "size", "description", "features", "mainImage", "gallery", "featured", "publishedAt"].map((name) => ({ name, title: name, type: name === "description" ? "array" : name === "gallery" ? "array" : "string" })) };
 const testimonialSchema = { name: "testimonial", title: "Testimonial", type: "document", fields: ["name", "role", "photo", "quote", "rating", "order"].map((name) => ({ name, title: name, type: "string" })) };
 const blogPostSchema = { name: "blogPost", title: "Blog post", type: "document", fields: ["title", "slug", "excerpt", "mainImage", "body", "publishedAt", "category"].map((name) => ({ name, title: name, type: "string" })) };
-const siteSettingsSchema = { name: "siteSettings", title: "Site settings", type: "document", fields: ["whatsappNumber", "phoneNumber", "email", "officeAddress", "facebook", "instagram", "tiktok", "formspreeId"].map((name) => ({ name, title: name, type: "string" })) };
+const siteSettingsSchema = { name: "siteSettings", title: "Site settings", type: "document", fields: ["whatsappNumber", "phoneNumber", "email", "officeAddress", "facebook", "instagram", "tiktok"].map((name) => ({ name, title: name, type: "string" })) };
 
 export const schemas = [propertySchema, testimonialSchema, blogPostSchema, siteSettingsSchema];

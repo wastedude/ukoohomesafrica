@@ -13,6 +13,5 @@ export const siteSettings = defineType({
     defineField({name: 'facebook', type: 'url'}),
     defineField({name: 'instagram', type: 'url'}),
     defineField({name: 'tiktok', type: 'url'}),
-    defineField({name: 'formspreeId', type: 'string'}),
   ],
 })

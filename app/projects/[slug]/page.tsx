@@ -9,6 +9,7 @@ import { urlFor } from "@/sanity/lib/image";
 import { ALL_PROPERTIES_QUERY, PROPERTY_BY_SLUG_QUERY } from "@/sanity/lib/queries";
 import { SiteHeader } from "@/components/site-header";
 import { absoluteUrl } from "@/lib/seo";
+import { PropertyGallery } from "./property-gallery";
 
 type PropertySummary = {
   _id: string;
@@ -44,8 +45,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     : {};
 }
 
-export default async function PropertyPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function PropertyPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ submitted?: string }> }) {
   const { slug } = await params;
+  const { submitted } = await searchParams;
   const property = await client.fetch(PROPERTY_BY_SLUG_QUERY, { slug });
   if (!property) notFound();
 
@@ -98,22 +100,16 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
       </div>
       <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-16 md:grid-cols-[1.2fr_0.8fr] md:gap-12 md:px-10 md:py-24">
         <div>
-          <div className="aspect-[1.35] rounded-lg bg-cover bg-center shadow-sm" role="img" aria-label={property.title} style={{ backgroundImage: `url(${imageUrl})` }} />
-          {galleryImages.length > 0 ? (
-            <section className="mt-10" aria-labelledby="gallery-heading">
-              <h2 id="gallery-heading" className="font-display text-3xl text-forest">Photo gallery</h2>
-              <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {galleryImages.map((image, index) => (
-                  <div
-                    key={`${property._id}-gallery-${index}`}
-                    className="aspect-[1.2] rounded-lg bg-cover bg-center shadow-sm"
-                    role="img"
-                    aria-label={`${property.title} gallery photo ${index + 1}`}
-                    style={{ backgroundImage: `url(${urlFor(image).width(900).url()})` }}
-                  />
-                ))}
-              </div>
-            </section>
+          <PropertyGallery images={propertyImages} title={property.title} />
+          {property.coordinates?.lat != null && property.coordinates?.lng != null ? (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${property.coordinates.lat},${property.coordinates.lng}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-forest hover:text-canopy"
+            >
+              <MapPin size={16} className="text-earth" /> Show on Google Maps
+            </a>
           ) : null}
           <div className="mt-10">
             <p className="flex items-center gap-2 text-sm text-slate"><MapPin size={16} className="text-earth" /> {property.location} <span className="text-mist">|</span> {property.size}</p>
@@ -130,7 +126,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
           <div className="mt-7 border-t border-mist pt-6">
             <h2 className="font-display text-2xl text-forest">Interested in this property?</h2>
             <p className="mt-3 text-sm leading-6 text-slate">Leave your details and our team will get back to you within 24 hours.</p>
-            <form className="mt-6 grid gap-4"><input required className="rounded-lg border border-mist bg-white px-4 py-3 text-sm text-ink outline-none focus:border-canopy" placeholder="Full name" /><input type="email" required className="rounded-lg border border-mist bg-white px-4 py-3 text-sm text-ink outline-none focus:border-canopy" placeholder="Email address" /><input required className="rounded-lg border border-mist bg-white px-4 py-3 text-sm text-ink outline-none focus:border-canopy" placeholder="Phone number" /><button type="submit" className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-earth px-5 py-3 text-sm font-semibold text-ink hover:bg-earth-light">Request details <ArrowUpRight size={16} /></button></form>
+            <form action="/api/contact" method="post" className="mt-6 grid gap-4"><input type="hidden" name="formType" value="property-enquiry" /><input type="hidden" name="property" value={property.title} />{submitted === "success" ? <p className="rounded-lg bg-earth-light px-4 py-3 text-sm text-forest">Thank you. We received your enquiry and will contact you soon.</p> : null}{submitted === "error" ? <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-800">We could not send your enquiry. Please try again or contact us directly.</p> : null}<input name="name" required className="rounded-lg border border-mist bg-white px-4 py-3 text-sm text-ink outline-none focus:border-canopy" placeholder="Full name" /><input name="email" type="email" required className="rounded-lg border border-mist bg-white px-4 py-3 text-sm text-ink outline-none focus:border-canopy" placeholder="Email address" /><input name="phone" required className="rounded-lg border border-mist bg-white px-4 py-3 text-sm text-ink outline-none focus:border-canopy" placeholder="Phone number" /><button type="submit" className="mt-2 inline-flex items-center justify-center gap-2 rounded-lg bg-earth px-5 py-3 text-sm font-semibold text-ink hover:bg-earth-light">Request details <ArrowUpRight size={16} /></button></form>
           </div>
         </aside>
       </div>

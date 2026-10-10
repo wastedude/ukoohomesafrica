@@ -291,7 +291,6 @@ ukoo-africa-homes/
     { name: 'facebook',        type: 'url' },
     { name: 'instagram',       type: 'url' },
     { name: 'tiktok',          type: 'url' },
-    { name: 'formspreeId',     type: 'string', description: 'Formspree form ID for enquiry submissions' },
   ]
 }
 ```
@@ -549,7 +548,7 @@ export const BLOG_POSTS_QUERY = groq`
 export const SITE_SETTINGS_QUERY = groq`
   *[_type == "siteSettings"][0] {
     whatsappNumber, phoneNumber, email, officeAddress,
-    facebook, instagram, tiktok, formspreeId
+    facebook, instagram, tiktok
   }
 `
 ```
@@ -583,7 +582,9 @@ NEXT_PUBLIC_SANITY_API_VERSION=2024-01-01
 SANITY_API_READ_TOKEN=your_read_token        # For ISR / on-demand revalidation (future)
 
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
-NEXT_PUBLIC_FORMSPREE_ID=your_formspree_id
+RESEND_API_KEY=re_your_api_key
+RESEND_FROM_EMAIL=Website <noreply@your-verified-domain.com>
+RESEND_TO_EMAIL=ukoohomes@gmail.com
 NEXT_PUBLIC_WHATSAPP_NUMBER=254700000000    # No + prefix
 NEXT_PUBLIC_SITE_URL=https://www.ukooafricahomes.co.ke
 ```

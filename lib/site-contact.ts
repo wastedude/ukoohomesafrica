@@ -1,6 +1,6 @@
 export const siteContact = {
-  whatsappNumber: "254700000000",
-  phoneNumber: "+254 700 000 000",
-  email: "hello@ukooafricahomes.co.ke",
+  whatsappNumber: "254768543038",
+  phoneNumber: "+254768543038",
+  email: "ukoohomes@gmail.com",
   officeAddress: "Juja, Kiambu County\nKenya",
 } as const;

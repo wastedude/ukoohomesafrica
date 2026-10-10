@@ -15,6 +15,8 @@ type PropertySummary = {
   slug?: { current: string };
 };
 
+type GalleryImage = Parameters<typeof urlFor>[0];
+
 export async function generateStaticParams() {
   const properties = await client.fetch(ALL_PROPERTIES_QUERY);
   return (properties as PropertySummary[]).map((property) => ({ slug: property.slug?.current ?? property._id }));
@@ -48,6 +50,11 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
   if (!property) notFound();
 
   const imageUrl = property.mainImage ? urlFor(property.mainImage).width(1200).url() : "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=85";
+  const galleryImages = (property.gallery ?? []) as GalleryImage[];
+  const propertyImages = [
+    ...(property.mainImage ? [imageUrl] : []),
+    ...galleryImages.map((image) => urlFor(image).width(1200).url()),
+  ];
 
   return (
     <main className="min-h-screen bg-stone">
@@ -56,7 +63,7 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
         "@type": "Product",
         name: property.title,
         description: `${property.type} in ${property.location}.`,
-        image: [imageUrl],
+        image: propertyImages.length > 0 ? propertyImages : [imageUrl],
         url: absoluteUrl(`/projects/${slug}`),
         brand: { "@type": "Brand", name: "Ukoo Africa Homes" },
         offers: property.price ? {
@@ -92,6 +99,22 @@ export default async function PropertyPage({ params }: { params: Promise<{ slug:
       <div className="mx-auto grid max-w-[1200px] gap-10 px-5 py-16 md:grid-cols-[1.2fr_0.8fr] md:gap-12 md:px-10 md:py-24">
         <div>
           <div className="aspect-[1.35] rounded-lg bg-cover bg-center shadow-sm" role="img" aria-label={property.title} style={{ backgroundImage: `url(${imageUrl})` }} />
+          {galleryImages.length > 0 ? (
+            <section className="mt-10" aria-labelledby="gallery-heading">
+              <h2 id="gallery-heading" className="font-display text-3xl text-forest">Photo gallery</h2>
+              <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                {galleryImages.map((image, index) => (
+                  <div
+                    key={`${property._id}-gallery-${index}`}
+                    className="aspect-[1.2] rounded-lg bg-cover bg-center shadow-sm"
+                    role="img"
+                    aria-label={`${property.title} gallery photo ${index + 1}`}
+                    style={{ backgroundImage: `url(${urlFor(image).width(900).url()})` }}
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
           <div className="mt-10">
             <p className="flex items-center gap-2 text-sm text-slate"><MapPin size={16} className="text-earth" /> {property.location} <span className="text-mist">|</span> {property.size}</p>
             <h2 className="mt-6 font-display text-4xl text-forest">A place to build from.</h2>

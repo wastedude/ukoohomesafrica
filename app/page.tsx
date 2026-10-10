@@ -30,6 +30,7 @@ type CmsProperty = {
   location?: string;
   size?: string;
   priceLabel?: string;
+  featured?: boolean;
   slug?: { current: string };
   mainImage?: { _type: string; asset?: { _ref?: string } };
 };
@@ -81,9 +82,14 @@ export default function Home() {
       });
   }, []);
 
+  const homepageProperties = useMemo(() => {
+    const featuredProperties = properties.filter((property) => property.featured);
+    return featuredProperties.length > 0 ? featuredProperties : properties;
+  }, [properties]);
+
   const visibleProperties = useMemo(
-    () => properties.filter((property) => location === "All locations" || property.location === location),
-    [location, properties],
+    () => homepageProperties.filter((property) => location === "All locations" || property.location === location),
+    [homepageProperties, location],
   );
 
   useEffect(() => {
@@ -114,8 +120,8 @@ export default function Home() {
   }, []);
 
   const locationOptions = useMemo(
-    () => ["All locations", ...new Set(properties.map((property) => property.location).filter(Boolean) as string[])],
-    [properties],
+    () => ["All locations", ...new Set(homepageProperties.map((property) => property.location).filter(Boolean) as string[])],
+    [homepageProperties],
   );
 
   const officeLines = siteContact.officeAddress.split("\n").filter(Boolean);
@@ -182,7 +188,7 @@ export default function Home() {
               <h1 className="reveal-up text-balance font-display text-[clamp(2.75rem,5.4vw,5.25rem)] leading-[0.9] text-white">Affordable land<br /><em className="text-earth">&amp; homes</em><br />across Kenya.</h1>
               <p className="reveal-up mt-6 max-w-[40rem] text-lg leading-7 text-white/90 md:mt-7 md:text-xl">Secure and affordable real estate investment opportunities in Juja, Thika and along Thika Superhighway, with genuine freehold title deeds and flexible payment plans.</p>
               <div className="reveal-up mt-8 flex flex-col gap-3 sm:flex-row"><a href="#projects" className="flex min-h-12 items-center justify-center gap-3 rounded-lg bg-earth px-6 py-3 text-sm font-semibold text-ink transition hover:bg-earth-light active:translate-y-px">Explore properties <ArrowRight size={17} /></a><a href="#visit" className="flex min-h-12 items-center justify-center gap-3 rounded-lg border border-white/60 px-6 py-3 text-sm font-semibold text-white transition hover:border-earth hover:text-earth active:translate-y-px">Book a site visit <MapPin size={17} /></a></div>
-              <div className="mt-10 flex items-center gap-4 text-sm text-white/80"><span className="flex -space-x-2"><span className="h-8 w-8 rounded-full border-2 border-forest bg-[#b47e62]" /><span className="h-8 w-8 rounded-full border-2 border-forest bg-[#d2a07e]" /><span className="h-8 w-8 rounded-full border-2 border-forest bg-[#694b3a]" /></span><span><strong className="text-white">300+ families</strong> have found their place</span></div>
+              <div className="mt-10 flex items-center gap-4 text-sm text-white/80"><span className="flex -space-x-2" aria-hidden="true"><span className="h-8 w-8 rounded-full border-2 border-forest bg-cover bg-center" style={{ backgroundImage: "url('/images/family-avatar-1.webp')" }} /><span className="h-8 w-8 rounded-full border-2 border-forest bg-cover bg-center" style={{ backgroundImage: "url('/images/olawale-munna-_ObjhzjnMmc-unsplash.webp')" }} /><span className="h-8 w-8 rounded-full border-2 border-forest bg-cover bg-center" style={{ backgroundImage: "url('/images/good-faces-QDRCvXpP18U-unsplash%20(1).webp')" }} /></span><span><strong className="text-white">300+ families</strong> have found their place</span></div>
             </div>
           </div>
           <div className="absolute bottom-8 right-10 hidden max-w-[170px] border-l border-earth pl-4 text-xs leading-5 text-white/70 xl:block">Every plot. Every promise. Grounded in trust.</div>
